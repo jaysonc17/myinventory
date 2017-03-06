@@ -3,6 +3,9 @@ var express = require('express');
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
 var itemController = require('./controllers/item');
+var userController = require('./controllers/user');
+var passport = require('passport');
+var authController = require('./controllers/auth');
 
 // Connect to the myinventory MongoDB
 mongoose.connect('mongodb://localhost:27017/myinventory');
@@ -16,19 +19,27 @@ app.use(bodyParser.urlencoded({
   extended: true
 }));
 
+// Use the passport package in our application
+app.use(passport.initialize());
+
 // Create our Express router
 var router = express.Router();
 
 // Create endpoint handlers for /items
 router.route('/items')
-  .post(itemController.postItems)
-  .get(itemController.getItems);
+  .post(authController.isAuthenticated, itemController.postItems)
+  .get(authController.isAuthenticated, itemController.getItems);
 
 // Create endpoint handlers for /items/:item_id
 router.route('/items/:item_id')
-  .get(itemController.getItem)
-  .put(itemController.putItem)
-  .delete(itemController.deleteItem);
+  .get(authController.isAuthenticated, itemController.getItem)
+  .put(authController.isAuthenticated, itemController.putItem)
+  .delete(authController.isAuthenticated, itemController.deleteItem);
+
+// Create endpoint handlers for /users
+router.route('/users')
+  .post(userController.postUsers)
+  .get(authController.isAuthenticated, userController.getUsers);
 
 // Register all our routes with /api
 app.use('/api', router);
